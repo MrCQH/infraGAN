@@ -13,8 +13,10 @@ class BaseDataset(data.Dataset):
         pass
 
 
-def get_transform(opt):
+def get_transform(opt, grayscale=False):
     transform_list = []
+    if grayscale:
+        transform_list.append(transforms.Grayscale(1))
     if opt.resize_or_crop == 'resize_and_crop':
         osize = [opt.loadSize, opt.loadSize]
         transform_list.append(transforms.Resize(osize, transforms.InterpolationMode.BICUBIC))
@@ -32,9 +34,11 @@ def get_transform(opt):
     if opt.isTrain and not opt.no_flip:
         transform_list.append(transforms.RandomHorizontalFlip())
 
-    transform_list += [transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5),
-                                            (0.5, 0.5, 0.5))]
+    transform_list += [transforms.ToTensor()]
+    if grayscale:
+        transform_list += [transforms.Normalize((0.5,), (0.5,))]
+    else:
+        transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     return transforms.Compose(transform_list)
 
 

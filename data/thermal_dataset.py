@@ -69,6 +69,8 @@ class ThermalDataset(BaseDataset):
         elif opt.dataset_mode == 'KAIST':
             self.AB_paths = make_thermal_dataset_kaist(path=opt.dataroot, text_path=opt.text_path)
         assert(opt.resize_or_crop == 'resize_and_crop')
+        self.input_nc = self.opt.output_nc if self.opt.which_direction == 'BtoA' else self.opt.input_nc
+        self.output_nc = self.opt.input_nc if self.opt.which_direction == 'BtoA' else self.opt.output_nc
 
     def __getitem__(self, index):
         # AB_path = self.AB_paths[index]
@@ -81,7 +83,7 @@ class ThermalDataset(BaseDataset):
 
         B = Image.open(B_path).convert('RGB')
         # B = Image.open(B_path)
-        # B = ImageOps.grayscale(B)
+        B = ImageOps.grayscale(B)
         #  B = B.resize((self.opt.loadSize, self.opt.loadSize), Image.BICUBIC)
         # B = transforms.ToTensor()(B.copy()).float()
 
@@ -97,13 +99,10 @@ class ThermalDataset(BaseDataset):
         # B = B[:, h_offset:h_offset + self.opt.fineSize,
         #        w_offset:w_offset + self.opt.fineSize]
 
-        A_transform = get_transform(self.opt)
-        B_transform = get_transform(self.opt)
+        A_transform = get_transform(self.opt, grayscale=(self.input_nc == 1))
+        B_transform = get_transform(self.opt, grayscale=(self.output_nc == 1))
         A = A_transform(A)
         B = B_transform(B)
-
-        A = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(A)
-        B = transforms.Normalize([0.5], [0.5])(B)
 
         if self.opt.which_direction == 'BtoA':
             input_nc = self.opt.output_nc
